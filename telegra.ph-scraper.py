@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import tkinter
 import bs4
@@ -6,6 +6,7 @@ import requests
 import re
 import urllib.request
 import os
+from PIL import Image
 
 #loads the given URL:
 def scrapePage():
@@ -32,8 +33,14 @@ def modifyHTML(tempSoup):
     #replace img src and store image url in array
     imageURLs = []
     for img in articleTag.findAll('img'):
+        #add style to <img...
+        #img['style'] = 'width: 100%; max-width:690px; height: auto;'
+        #add image name to array
         imageURLs.append(img['src'].replace("/file/",""))
-        img['src'] = img['src'].replace("/file/","/user/images/")
+        #set new image src with lowres image
+        img['src'] = img['src'].replace("/file/","/user/images/low")
+        #add specific lightbox wrapper around img tag - to the normalres image
+        img.wrap(tempSoup.new_tag("a",attrs={"rel": "lightbox", "href": img['src'].replace("/user/images/low","/user/images/")}))
     #embed youtube
     for iframe in articleTag.findAll('iframe'):
         iframe['src'] = re.sub(".+?(?<=%3D)","https://www.youtube.com/embed/",iframe['src'])
@@ -51,7 +58,7 @@ def saveHTMLToFile(HtmlData):
 
 #download all images from the given URL
 def downloadAllImages(imageURLs):
-    textArea.insert(tkinter.INSERT, "")
+    textArea.delete(1.0,"end")
     #create image folder to store the downloaded images
     if not os.path.exists('images'):
         os.makedirs('images')
@@ -59,13 +66,17 @@ def downloadAllImages(imageURLs):
     for imageURL in imageURLs:
         textArea.insert(tkinter.END, "- ")
         urllib.request.urlretrieve("https://telegra.ph/file/" + imageURL, "images/" + imageURL)
+        #resize image and add "low" to image original name
+        tempImage = Image.open("images/" + imageURL)
+        tempImage.thumbnail((int(inputTxtThumb.get()), int(inputTxtThumb.get())))
+        tempImage.save("images/low" + imageURL)
     textArea.insert(tkinter.END, "\nFINISHED")
 
 #tkinter - GUI:
 window = tkinter.Tk(className="telegraph scraper")
 window.geometry("500x350")
 
-greeting = tkinter.Label(window, text="URL of telegra.ph site you wish to scrap:")
+greeting = tkinter.Label(window, text="URL of telegra.ph site you wish to scrape:")
 greeting.grid(column=0, columnspan=5, row=1, pady = 10, padx = 10)
 
 enterURL = tkinter.Label(window, text="URL:")
@@ -82,11 +93,18 @@ inputTxtFile = tkinter.Entry(window, width=45)
 inputTxtFile.insert(0, ".html")
 inputTxtFile.grid(column=1, row=3, pady = 10, padx = 10)
 
+thumbnailSize = tkinter.Label(window, text="Thumb-Size:")
+thumbnailSize.grid(column=0, row=4, pady = 10, padx = 10)
+
+inputTxtThumb = tkinter.Entry(window, width=45)
+inputTxtThumb.insert(0, "400")
+inputTxtThumb.grid(column=1, row=4, pady = 10, padx = 10)
+
 scrapePageBtn = tkinter.Button(window, text ="scrape page", command = scrapePage)
-scrapePageBtn.grid(column=0, columnspan=2, row=4, pady = 10, padx = 10)
+scrapePageBtn.grid(column=0, columnspan=2, row=5, pady = 10, padx = 10)
 
 textArea = tkinter.Text(window, height=3, width=40)
-textArea.insert(tkinter.INSERT, "- insert URL of telegra.ph site\n- choose local filename")
-textArea.grid(columnspan=3, row=5, pady = 10, padx = 10)
+textArea.insert(tkinter.INSERT, "- insert URL of telegra.ph site\n- choose local HTML filename\n- change Thumbnail resolution")
+textArea.grid(columnspan=3, row=6, pady = 10, padx = 10)
  
 window.mainloop()
