@@ -17,6 +17,7 @@ def scrapePage():
     modifyHTML(mySoup)
 
 def modifyHTML(tempSoup):
+    #add two wrapping divs to iframes
     if(tempSoup.iframe):
         #add first div wrapper for iframe -> video
         newTagIframe1 = tempSoup.new_tag("div",attrs={"class": "video-container-wrapper iloader"})
@@ -27,6 +28,7 @@ def modifyHTML(tempSoup):
     #get only the <article> content
     articleTag = tempSoup.article
     #removes the first Header
+    tempTopic = articleTag.select_one("h1").getText()
     articleTag.select_one("h1").decompose()
     #removes the address -> author
     articleTag.select_one("address").decompose()
@@ -44,6 +46,10 @@ def modifyHTML(tempSoup):
     #embed youtube
     for iframe in articleTag.findAll('iframe'):
         iframe['src'] = re.sub(".+?(?<=%3D)","https://www.youtube.com/embed/",iframe['src'])
+    #add link to telegra.ph article at bottom
+    telegraphLink = tempSoup.new_tag("a",attrs={"href": inputTxt.get(), "target":"_blank"})
+    telegraphLink.string = "Link to telegra.ph page: " + tempTopic
+    tempSoup.article.append(telegraphLink)
     #prettify code
     saveHTMLToFile(articleTag.prettify())
     downloadAllImages(imageURLs)
