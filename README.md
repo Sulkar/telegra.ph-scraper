@@ -16,5 +16,7 @@ Load HTML and images from a telegra.ph post and saves the data to local harddriv
 - add style to img tags for responsiveness
 - use regular expression to get view code of embedded youtube videos and create new iframe container
 
+!Info: Use Youtube videos in your telegra.ph post with the standard URL, like https://www.youtube.com/watch?v=UsTLJlPvVvE. The regular expression searches for "?v=".
+
 ![](python_31QoKVkNBs.png)
 
