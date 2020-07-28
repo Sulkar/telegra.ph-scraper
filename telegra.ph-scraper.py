@@ -17,14 +17,6 @@ def scrapePage():
     modifyHTML(mySoup)
 
 def modifyHTML(tempSoup):
-    #add two wrapping divs to iframes
-    if(tempSoup.iframe):
-        #add first div wrapper for iframe -> video
-        newTagIframe1 = tempSoup.new_tag("div",attrs={"class": "video-container-wrapper iloader"})
-        tempSoup.iframe.wrap(newTagIframe1)
-        #add second div wrapper for iframe -> video
-        newTagIframe2 = tempSoup.new_tag("div",attrs={"class": "video-container"})
-        tempSoup.iframe.wrap(newTagIframe2)
     #get only the <article> content
     articleTag = tempSoup.article
     #removes the first Header
@@ -32,10 +24,11 @@ def modifyHTML(tempSoup):
     articleTag.select_one("h1").decompose()
     #removes the address -> author
     articleTag.select_one("address").decompose()
+    
     #replace img src and store image url in array
     imageURLs = []
     for img in articleTag.findAll('img'):
-        #add style to <img...
+        #add style to <img... (optional)
         #img['style'] = 'width: 100%; max-width:690px; height: auto;'
         #add image name to array
         imageURLs.append(img['src'].replace("/file/",""))
@@ -43,9 +36,14 @@ def modifyHTML(tempSoup):
         img['src'] = img['src'].replace("/file/","/user/images/low")
         #add specific lightbox wrapper around img tag - to the normalres image
         img.wrap(tempSoup.new_tag("a",attrs={"rel": "lightbox", "href": img['src'].replace("/user/images/low","/user/images/")}))
+    
     #embed youtube
     for iframe in articleTag.findAll('iframe'):
         iframe['src'] = re.sub(".+?(?<=%3D)","https://www.youtube.com/embed/",iframe['src'])
+        #add div wrappers for iframe -> video
+        iframe.wrap(tempSoup.new_tag("div",attrs={"class": "video-container-wrapper iloader"}))
+        iframe.wrap(tempSoup.new_tag("div",attrs={"class": "video-container"}))
+
     #add link to telegra.ph article at bottom
     telegraphLink = tempSoup.new_tag("a",attrs={"href": inputTxt.get(), "target":"_blank"})
     telegraphLink.string = "Link to telegra.ph page: " + tempTopic
@@ -65,9 +63,11 @@ def saveHTMLToFile(HtmlData):
 #download all images from the given URL
 def downloadAllImages(imageURLs):
     textArea.delete(1.0,"end")
+    
     #create image folder to store the downloaded images
     if not os.path.exists('images'):
         os.makedirs('images')
+    
     #download every image
     for imageURL in imageURLs:
         textArea.insert(tkinter.END, "- ")
@@ -76,6 +76,7 @@ def downloadAllImages(imageURLs):
         tempImage = Image.open("images/" + imageURL)
         tempImage.thumbnail((int(inputTxtThumb.get()), int(inputTxtThumb.get())))
         tempImage.save("images/low" + imageURL)
+    
     textArea.insert(tkinter.END, "\nFINISHED")
 
 #tkinter - GUI:
@@ -96,7 +97,7 @@ enterFileName = tkinter.Label(window, text="Filename:")
 enterFileName.grid(column=0, row=3, pady = 10, padx = 10)
 
 inputTxtFile = tkinter.Entry(window, width=45)
-inputTxtFile.insert(0, ".html")
+inputTxtFile.insert(0, "test.html")
 inputTxtFile.grid(column=1, row=3, pady = 10, padx = 10)
 
 thumbnailSize = tkinter.Label(window, text="Thumb-Size:")
