@@ -20,3 +20,4 @@ Load HTML and images from a telegra.ph post and saves the data to local harddriv
 
 ![](python_31QoKVkNBs.png)
 
+[Link to telegra.ph article](https://telegra.ph/Create-a-Telegraph-to-HTML-Exporter-07-25) for some additional informations.
